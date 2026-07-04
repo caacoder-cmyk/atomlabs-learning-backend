@@ -139,18 +139,26 @@ app.post('/api/submissions', async (req, res) => {
   }
 });
 
-// 2. Get All Submissions (for teacher view/dashboard)
 app.get('/api/submissions', async (req, res) => {
+  const { name, className, type } = req.query;
+  let query = {};
+  if (name) query.name = new RegExp('^' + name.trim() + '$', 'i');
+  if (className) query.className = new RegExp('^' + className.trim() + '$', 'i');
+  if (type) query.type = type;
+
   if (isMongoEnabled) {
     try {
-      const subs = await Submission.find().sort({ timestamp: -1 });
+      const subs = await Submission.find(query).sort({ timestamp: -1 });
       res.json(subs);
     } catch (error) {
       console.error('Error fetching from MongoDB:', error);
       res.status(500).json({ error: 'Gagal memuat data dari database cloud.', details: error.message });
     }
   } else {
-    const submissions = readSubmissions();
+    let submissions = readSubmissions();
+    if (name) submissions = submissions.filter(s => s.name.toLowerCase().trim() === name.toLowerCase().trim());
+    if (className) submissions = submissions.filter(s => s.className.toLowerCase().trim() === className.toLowerCase().trim());
+    if (type) submissions = submissions.filter(s => s.type === type);
     res.json(submissions);
   }
 });
