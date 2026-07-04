@@ -1,3 +1,4 @@
+// Trigger Vercel rebuild to apply environment variables
 import express from 'express';
 import cors from 'cors';
 import fs from 'fs';
