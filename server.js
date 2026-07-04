@@ -105,7 +105,7 @@ app.post('/api/submissions', async (req, res) => {
       });
     } catch (error) {
       console.error('Error saving to MongoDB:', error);
-      res.status(500).json({ error: 'Gagal menyimpan submission ke database cloud.' });
+      res.status(500).json({ error: 'Gagal menyimpan submission ke database cloud.', details: error.message });
     }
   } else {
     const submissions = readSubmissions();
@@ -136,7 +136,7 @@ app.get('/api/submissions', async (req, res) => {
       res.json(subs);
     } catch (error) {
       console.error('Error fetching from MongoDB:', error);
-      res.status(500).json({ error: 'Gagal memuat data dari database cloud.' });
+      res.status(500).json({ error: 'Gagal memuat data dari database cloud.', details: error.message });
     }
   } else {
     const submissions = readSubmissions();
