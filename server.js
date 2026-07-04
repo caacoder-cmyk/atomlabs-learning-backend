@@ -45,6 +45,8 @@ const submissionSchema = new mongoose.Schema({
   answers: { type: mongoose.Schema.Types.Mixed, default: null },
   score: { type: Number, default: null },
   maxScore: { type: Number, default: null },
+  teacherScore: { type: Number, default: null },
+  teacherFeedback: { type: String, default: '' },
   timestamp: { type: Date, default: Date.now }
 });
 
@@ -156,6 +158,43 @@ app.delete('/api/submissions', async (req, res) => {
       res.json({ message: 'Semua data submission berhasil dihapus.' });
     } else {
       res.status(500).json({ error: 'Gagal menghapus data submission.' });
+    }
+  }
+// 4. Update Submission with Grade and Feedback (for teachers)
+app.put('/api/submissions/:id', async (req, res) => {
+  const { id } = req.params;
+  const { teacherScore, teacherFeedback } = req.body;
+
+  if (isMongoEnabled) {
+    try {
+      const updatedSub = await Submission.findByIdAndUpdate(
+        id,
+        { teacherScore, teacherFeedback },
+        { new: true }
+      );
+      if (!updatedSub) {
+        return res.status(404).json({ error: 'Data submission tidak ditemukan.' });
+      }
+      res.json({ message: 'Nilai dan masukan berhasil disimpan!', data: updatedSub });
+    } catch (error) {
+      console.error('Error updating in MongoDB:', error);
+      res.status(500).json({ error: 'Gagal menyimpan nilai ke database cloud.' });
+    }
+  } else {
+    let submissions = readSubmissions();
+    // In JSON fallback, 'id' could be a string timestamp or UUID
+    const subIdx = submissions.findIndex(s => s.id === id || String(s.timestamp) === id);
+    if (subIdx === -1) {
+      return res.status(404).json({ error: 'Data submission tidak ditemukan.' });
+    }
+    
+    submissions[subIdx].teacherScore = Number(teacherScore);
+    submissions[subIdx].teacherFeedback = teacherFeedback || '';
+    
+    if (writeSubmissions(submissions)) {
+      res.json({ message: 'Nilai dan masukan berhasil disimpan!', data: submissions[subIdx] });
+    } else {
+      res.status(500).json({ error: 'Gagal menyimpan nilai ke server lokal.' });
     }
   }
 });
