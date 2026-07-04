@@ -17,19 +17,30 @@ app.use(cors());
 app.use(express.json());
 
 // Path to data file (for local fallback storage)
+// Connect to MongoDB if MONGODB_URI is provided
+const isMongoEnabled = !!process.env.MONGODB_URI;
+
+// Path to data file (for local fallback storage)
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'submissions.json');
 
-// Ensure data directory and file exist for fallback
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+// Ensure data directory and file exist for fallback ONLY if MongoDB is not enabled
+if (!isMongoEnabled) {
+  if (!fs.existsSync(DATA_DIR)) {
+    try {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    } catch (e) {
+      console.error('Failed to create local data dir:', e);
+    }
+  }
+  if (!fs.existsSync(DATA_FILE)) {
+    try {
+      fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2), 'utf-8');
+    } catch (e) {
+      console.error('Failed to create local data file:', e);
+    }
+  }
 }
-if (!fs.existsSync(DATA_FILE)) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2), 'utf-8');
-}
-
-// Connect to MongoDB if MONGODB_URI is provided
-const isMongoEnabled = !!process.env.MONGODB_URI;
 if (isMongoEnabled) {
   mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('Connected to MongoDB database successfully.'))
