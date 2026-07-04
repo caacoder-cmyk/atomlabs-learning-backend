@@ -161,6 +161,8 @@ app.delete('/api/submissions', async (req, res) => {
       res.status(500).json({ error: 'Gagal menghapus data submission.' });
     }
   }
+});
+
 // 4. Update Submission with Grade and Feedback (for teachers)
 app.put('/api/submissions/:id', async (req, res) => {
   const { id } = req.params;
